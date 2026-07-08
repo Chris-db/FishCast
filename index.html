@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#14140f" />
+  <meta name="theme-color" content="#ffffff" />
   <meta name="description" content="Free fishing-time ratings for any spot: solunar periods, pressure trend, tides, and weather scored into six time blocks." />
   <title>FishCast — when to fish</title>
   <link rel="stylesheet" href="css/styles.css" />
@@ -11,7 +11,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="FishCast" />
   <!-- Analytics: create a free account at goatcounter.com, then replace
        YOURCODE below and remove this comment block's wrapper.
@@ -22,19 +22,21 @@
 <body>
   <div class="app">
     <header class="top">
-      <span class="wordmark">FishCast</span>
-      <button id="share-btn" type="button" class="icon-btn" aria-label="Share today's forecast" hidden>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-          <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
-        </svg>
-      </button>
+      <div class="brand-row">
+        <span class="wordmark">FishCast</span>
+        <button id="share-btn" type="button" class="icon-btn" aria-label="Share today's forecast" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+          </svg>
+        </button>
+      </div>
       <button id="spot-btn" type="button" class="spot-btn" aria-haspopup="dialog">
         <span class="spot-btn-text">
           <span id="spot-name">—</span>
           <span id="spot-region" class="spot-btn-region"></span>
         </span>
-        <svg class="chev" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+        <svg class="chev" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
@@ -42,6 +44,8 @@
 
     <nav id="mode-control" class="seg" aria-label="Fishing mode"></nav>
     <nav id="day-tabs" class="tabs" aria-label="Day"></nav>
+
+    <div id="dayshape" class="dayshape" aria-hidden="true" hidden></div>
 
     <p id="summary" class="summary"></p>
 

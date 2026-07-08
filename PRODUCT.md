@@ -28,7 +28,7 @@ Practical, legible, quietly confident. A tide-table taped to a bait-shop wall, n
 1. **Answer first** — score, label, reason visible for every block without interaction.
 2. **Reasons earn trust** — every number is explained in plain angler language ("falling pressure + incoming tide"), never just a value.
 3. **Safety overrides score** — the weather gate and boat go/no-go are visually louder than any good score.
-4. **Built for the dark** — pre-dawn is the core usage moment; dark surface, high contrast, no glare.
+4. **The Almanac identity** — white paper, serif numerals, hairline rules: a beautifully typeset tide almanac, chosen by Chris over dark/sporty directions (2026-07-08). Optimized for legibility in full beach sun; high contrast keeps it usable pre-dawn too.
 5. **Coordinates, not places** — no location-specific logic; everything derives from lat/lng, timezone, and season-by-latitude.
 
 ## Accessibility & Inclusion

@@ -139,6 +139,7 @@ function renderSpotButton() {
 
 function skeleton() {
   $('#banner').hidden = true;
+  $('#dayshape').hidden = true;
   $('#summary').innerHTML = '';
   const list = $('#blocks');
   list.innerHTML = '';
@@ -217,6 +218,14 @@ function renderDay() {
     banner.hidden = true;
   }
 
+  // day shape: six bars showing how the day's bite curve runs
+  const shape = $('#dayshape');
+  shape.hidden = false;
+  shape.innerHTML = day.blocks.map((b) => `
+    <div class="bar${b.past && dayOffset === 0 ? ' past' : ''}${b.current && dayOffset === 0 ? ' current' : ''}" data-rating="${ratingKey(b)}">
+      <i style="--hf:${Math.max(b.score, 5) / 100}"></i><span>${String(b.start).padStart(2, '0')}</span>
+    </div>`).join('');
+
   // six block rows
   const list = $('#blocks');
   list.innerHTML = '';
@@ -228,19 +237,21 @@ function renderDay() {
     if (b.current && dayOffset === 0) li.classList.add('current');
     const cond = condLine(b.conditions);
     li.innerHTML = `
-      <div class="row-time" aria-hidden="true">
-        <span>${String(b.start).padStart(2, '0')}:00</span>
-        <span class="row-time-end">${String(b.end).padStart(2, '0')}:00</span>
-      </div>
       <div class="row-main">
         <p class="row-name">${b.name}${b.current && dayOffset === 0 ? '<em class="now">Now</em>' : ''}</p>
+        <p class="row-hours">${String(b.start).padStart(2, '0')}:00–${String(b.end).padStart(2, '0')}:00</p>
         <p class="row-reason">${b.reason}</p>
         ${cond ? `<p class="row-cond">${cond}</p>` : ''}
       </div>
       <div class="row-score">
-        <span class="score-num">${b.score}</span>
+        <span class="ring">
+          <svg viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="ring-bg" cx="22" cy="22" r="19" pathLength="100"/>
+            <circle class="ring-fg" cx="22" cy="22" r="19" pathLength="100" style="--p:${b.score}"/>
+          </svg>
+          <b class="score-num">${b.score}</b>
+        </span>
         <span class="score-label">${b.label}</span>
-        <span class="micro-meter" role="presentation"><i style="--w:${b.score}%"></i></span>
       </div>`;
     list.appendChild(li);
   }
