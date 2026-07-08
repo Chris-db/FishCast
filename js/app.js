@@ -140,6 +140,7 @@ function renderSpotButton() {
 function skeleton() {
   $('#banner').hidden = true;
   $('#dayshape').hidden = true;
+  $('#hero').hidden = true;
   $('#summary').innerHTML = '';
   const list = $('#blocks');
   list.innerHTML = '';
@@ -187,7 +188,30 @@ function renderDay() {
   setUnits(state.units);
   const day = scoreDay({ mode: spot.mode, spot, wx, marine, dayStr, nowMs });
   lastDay = day;
-  $('#share-btn').hidden = false;
+
+  // hero: lead with the answer — the best upcoming window
+  const hero = $('#hero');
+  {
+    const upcoming = day.blocks.filter((b) => !(b.past && dayOffset === 0));
+    const pool = upcoming.length ? upcoming : day.blocks;
+    const best = pool.reduce((a, b) => (b.score > a.score ? b : a));
+    const dayWord = dayOffset === 0 ? 'today' : dayOffset === 1 ? 'tomorrow' : 'this day';
+    hero.hidden = false;
+    hero.dataset.rating = ratingKey(best);
+    hero.innerHTML = `
+      <p class="hero-kicker">Best window ${dayWord}</p>
+      <div class="hero-main">
+        <div class="hero-when">
+          <p class="hero-block">${best.name} · ${String(best.start).padStart(2, '0')}:00–${String(best.end).padStart(2, '0')}:00</p>
+          <p class="hero-reason">${best.reason}</p>
+        </div>
+        <div class="hero-score">
+          <span class="hero-num">${best.score}<em>/100</em></span>
+          <span class="label-pill">${best.label}</span>
+        </div>
+      </div>
+      <div class="hero-meter" role="presentation"><i style="--w:${best.score}%"></i></div>`;
+  }
 
   // summary strip
   const parts = [];
@@ -244,14 +268,8 @@ function renderDay() {
         ${cond ? `<p class="row-cond">${cond}</p>` : ''}
       </div>
       <div class="row-score">
-        <span class="ring">
-          <svg viewBox="0 0 44 44" aria-hidden="true">
-            <circle class="ring-bg" cx="22" cy="22" r="19" pathLength="100"/>
-            <circle class="ring-fg" cx="22" cy="22" r="19" pathLength="100" style="--p:${b.score}"/>
-          </svg>
-          <b class="score-num">${b.score}</b>
-        </span>
-        <span class="score-label">${b.label}</span>
+        <span class="score-num">${b.score}<em>/100</em></span>
+        <span class="label-pill">${b.label}</span>
       </div>`;
     list.appendChild(li);
   }
@@ -462,6 +480,7 @@ async function shareForecast() {
 
 wireSpotSheet();
 $('#share-btn').addEventListener('click', shareForecast);
+$('#tab-spots').addEventListener('click', () => $('#spot-btn').click());
 loadAndRender();
 // refresh scores every 10 min so "now" markers and windows stay honest
 setInterval(() => { if (wx) renderDay(); }, 10 * 60000);
