@@ -41,20 +41,58 @@
     <nav id="mode-control" class="seg" aria-label="Fishing mode"></nav>
     <nav id="day-tabs" class="tabs" aria-label="Day"></nav>
 
-    <section id="hero" class="hero" hidden></section>
+    <main id="view-forecast">
+      <section id="hero" class="hero" hidden></section>
 
-    <div id="dayshape" class="dayshape" aria-hidden="true" hidden></div>
+      <section id="shape-card" class="chart-card" hidden>
+        <div class="chart-head">
+          <h2 class="chart-title">How the day fishes</h2>
+        </div>
+        <div id="dayshape" class="dayshape"></div>
+        <p class="chart-legend" aria-hidden="true">
+          <span data-rating="poor"><i></i>Poor</span>
+          <span data-rating="fair"><i></i>Fair</span>
+          <span data-rating="good"><i></i>Good</span>
+          <span data-rating="excellent"><i></i>Excellent</span>
+        </p>
+      </section>
 
-    <p id="summary" class="summary"></p>
+      <p id="summary" class="summary"></p>
 
-    <section id="banner" class="banner" hidden>
-      <strong class="banner-title"></strong>
-      <span class="banner-text"></span>
-    </section>
+      <section id="banner" class="banner" hidden>
+        <strong class="banner-title"></strong>
+        <span class="banner-text"></span>
+      </section>
 
-    <ul id="blocks" class="blocks"></ul>
+      <ul id="blocks" class="blocks"></ul>
 
-    <p id="notice" class="notice" hidden></p>
+      <p id="notice" class="notice" hidden></p>
+    </main>
+
+    <main id="view-weather" hidden>
+      <section id="wx-now" class="chart-card" hidden></section>
+      <section id="wx-tide" class="chart-card" hidden>
+        <div class="chart-head"><h2 class="chart-title">Tide</h2><span class="chart-readout"></span></div>
+        <div class="chart-svg"></div>
+      </section>
+      <section id="wx-sun" class="chart-card" hidden>
+        <div class="chart-head"><h2 class="chart-title">Sun &amp; moon</h2></div>
+        <div class="chart-svg"></div>
+        <div class="moon-row"></div>
+      </section>
+      <section id="wx-wind" class="chart-card" hidden>
+        <div class="chart-head"><h2 class="chart-title">Wind</h2><span class="chart-readout"></span></div>
+        <div class="chart-svg"></div>
+      </section>
+      <section id="wx-temp" class="chart-card" hidden>
+        <div class="chart-head"><h2 class="chart-title">Air temperature</h2><span class="chart-readout"></span></div>
+        <div class="chart-svg"></div>
+      </section>
+      <section id="wx-rain" class="chart-card" hidden>
+        <div class="chart-head"><h2 class="chart-title">Chance of rain</h2><span class="chart-readout"></span></div>
+        <div class="chart-svg"></div>
+      </section>
+    </main>
 
     <footer class="foot">
       Weather &amp; marine data: Open-Meteo · sun, moon &amp; solunar computed locally ·
@@ -64,9 +102,13 @@
   </div>
 
   <nav class="tabbar" aria-label="App">
-    <button type="button" class="tab-item" aria-pressed="true">
+    <button id="tab-forecast" type="button" class="tab-item" aria-pressed="true">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15q3-4 6-1t6-1 6 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 20q3-4 6-1t6-1 6 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"/><circle cx="12" cy="6" r="2.5" fill="currentColor"/></svg>
       <span>Forecast</span>
+    </button>
+    <button id="tab-weather" type="button" class="tab-item" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l5-7 4 4 6-9 3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="6" r="2.2" fill="currentColor"/></svg>
+      <span>Weather</span>
     </button>
     <button id="tab-spots" type="button" class="tab-item" aria-pressed="false">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.5" fill="currentColor"/></svg>

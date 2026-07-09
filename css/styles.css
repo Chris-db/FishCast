@@ -260,6 +260,93 @@ body {
 [data-rating="poor"] .label-pill { background: color-mix(in oklab, var(--poor) 12%, #ffffff); color: var(--poor); }
 [data-rating="nogo"] .label-pill { background: var(--danger-container); color: var(--on-danger-container); }
 
+/* ---- chart cards (score chart + weather view) ---- */
+
+.chart-card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 0.8rem 1rem 0.9rem;
+  margin-top: 0.9rem;
+}
+
+#view-weather { display: flex; flex-direction: column; }
+#view-weather .chart-card { margin-top: 0.75rem; }
+#view-weather .chart-card:first-child { margin-top: 0.9rem; }
+
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+.chart-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+.chart-readout {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-height: 1em;
+}
+
+.chart-svg svg { display: block; width: 100%; height: auto; }
+.chart-svg { font-family: var(--font); }
+.chart-empty { font-size: 0.8125rem; color: var(--ink-dim); padding: 0.5rem 0 0.2rem; }
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+}
+.chart-legend span { display: inline-flex; align-items: center; gap: 0.35em; }
+.chart-legend i { width: 8px; height: 8px; border-radius: 3px; }
+.chart-legend [data-rating="poor"] i { background: #d98a80; }
+.chart-legend [data-rating="fair"] i { background: #e3b34c; }
+.chart-legend [data-rating="good"] i { background: #5fb3aa; }
+.chart-legend [data-rating="excellent"] i { background: var(--primary); }
+
+/* right-now grid */
+.now-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.3rem; }
+.now-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 0.6rem 0.4rem;
+  color: var(--ink-dim);
+}
+.now-cell b { font-size: 0.9375rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.now-cell span { font-size: 0.68rem; font-weight: 600; }
+.now-cell .cic, .now-cell .warrow { width: 15px; height: 15px; }
+
+/* moon row under the sun arc */
+.moon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--surface-2);
+  font-size: 0.8125rem;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.moon-row svg { flex: none; }
+.moon-row b { color: var(--ink); font-weight: 700; }
+
 /* ---- day shape chart ---- */
 
 .dayshape {
@@ -267,7 +354,7 @@ body {
   align-items: flex-end;
   gap: 6px;
   height: 72px;
-  padding: 0.9rem 0.15rem 0;
+  padding-top: 0.5rem;
 }
 
 .bar {
@@ -278,7 +365,14 @@ body {
   align-items: stretch;
   gap: 4px;
   height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
 }
+.bar:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .bar i {
   display: block;
   height: calc((100% - 14px) * var(--hf, 0.05));
@@ -376,6 +470,11 @@ body {
 
 .row.past { opacity: 0.5; }
 .row.current { box-shadow: 0 0 0 2px var(--primary), var(--shadow-card); }
+.row.flash { animation: flashring 1.4s var(--ease); }
+@keyframes flashring {
+  0%, 35% { box-shadow: 0 0 0 3px var(--aqua), 0 0 0 5px var(--primary), var(--shadow-card); }
+  100% { box-shadow: var(--shadow-card); }
+}
 
 .row-main { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
 
@@ -427,6 +526,7 @@ body {
 }
 .row-cond .dot { margin: 0 0.45em; }
 .warrow { width: 10px; height: 10px; fill: currentColor; margin-right: 0.3em; display: inline-block; }
+.cic { width: 11px; height: 11px; margin-right: 0.28em; display: inline-block; color: inherit; }
 
 .row-score { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; flex: none; }
 .score-num {
@@ -521,7 +621,7 @@ body {
   font: inherit;
   font-size: 0.7rem;
   font-weight: 600;
-  min-width: 72px;
+  min-width: 58px;
   min-height: 48px;
   cursor: pointer;
   transition: color 160ms var(--ease);
@@ -529,7 +629,7 @@ body {
 .tab-item svg {
   width: 22px;
   height: 22px;
-  padding: 3px 14px;
+  padding: 3px 11px;
   box-sizing: content-box;
   border-radius: 999px;
   transition: background 160ms var(--ease);

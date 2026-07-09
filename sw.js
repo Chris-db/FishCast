@@ -2,7 +2,7 @@
 // passes through untouched (js/data.js has its own localStorage cache with
 // stale-when-offline fallback).
 
-const CACHE = 'fishcast-shell-v3';
+const CACHE = 'fishcast-shell-v4';
 const SHELL = [
   './',
   'index.html',
@@ -11,6 +11,7 @@ const SHELL = [
   'js/engine.js',
   'js/astro.js',
   'js/data.js',
+  'js/charts.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',

@@ -1,5 +1,7 @@
-import { fetchForecast, fetchMarine, geocode } from './data.js';
-import { BLOCKS, MODES, scoreDay, weatherWindow, setUnits } from './engine.js';
+import { fetchForecast, fetchMarine, geocode, interp } from './data.js';
+import { BLOCKS, MODES, scoreDay, weatherWindow, setUnits, tideExtrema } from './engine.js';
+import { tideChart, windChart, tempChart, rainChart, sunArc, moonIcon, attachScrub, fmtHM } from './charts.js';
+import { moonEvents } from './astro.js';
 
 const STORE_KEY = 'fishcast:state:v1';
 const DAY_MS = 86400000;
@@ -60,25 +62,35 @@ const windVal = (kmh) => Math.round(state.units === 'imperial' ? kmh * 0.621371 
 const windUnit = () => (state.units === 'imperial' ? 'mph' : 'km/h');
 const heightStr = (m) => (state.units === 'imperial' ? `${(m * 3.28084).toFixed(1)} ft` : `${m.toFixed(1)} m`);
 
-/** Compact per-block conditions: wind, temp, rain, cloud, swell. */
+/** Tiny condition icons (stroke/fill follows text color). */
+const IC = {
+  temp: '<svg class="cic" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.75 1.9a1.25 1.25 0 0 1 2.5 0v4a2.6 2.6 0 1 1-2.5 0Z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>',
+  rain: '<svg class="cic" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.3C6 1.3 2.8 5.4 2.8 7.6a3.2 3.2 0 0 0 6.4 0C9.2 5.4 6 1.3 6 1.3Z" fill="currentColor"/></svg>',
+  cloud: '<svg class="cic" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.6 9.5a2.4 2.4 0 0 1-.3-4.7 3 3 0 0 1 5.9.8A2.05 2.05 0 0 1 8.9 9.5Z" fill="currentColor"/></svg>',
+  swell: '<svg class="cic" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 7.5q2.5-3 5 0t5 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+};
+
+function windGlyph(windDir) {
+  if (windDir == null) return '';
+  const rot = Math.round((windDir + 180) % 360);
+  return `<svg class="warrow" viewBox="0 0 12 12" aria-hidden="true" style="transform:rotate(${rot}deg)"><path d="M6 1l3.4 8-3.4-2.2L2.6 9Z"/></svg>`;
+}
+
+/** Compact per-block conditions: wind, temp, rain, cloud, swell — with icons. */
 function condLine(w) {
   if (!w) return '';
   const parts = [];
   if (w.wind != null) {
-    let wind = '';
-    if (w.windDir != null) {
-      // arrow shows where the wind blows TO; label is the standard FROM compass
-      const rot = Math.round((w.windDir + 180) % 360);
-      wind += `<svg class="warrow" viewBox="0 0 12 12" aria-hidden="true" style="transform:rotate(${rot}deg)"><path d="M6 1l3.4 8-3.4-2.2L2.6 9Z"/></svg>${compass(w.windDir)} `;
-    }
+    let wind = windGlyph(w.windDir);
+    if (w.windDir != null) wind += `${compass(w.windDir)} `;
     wind += `${windVal(w.wind)}`;
     if (w.gust != null && w.gust >= w.wind + 9) wind += `–${windVal(w.gust)}`;
     parts.push(`${wind} ${windUnit()}`);
   }
-  if (w.temp != null) parts.push(fmtTemp(w.temp));
-  if (w.rainProb != null && (w.rainProb >= 15 || (w.rain ?? 0) > 0.2)) parts.push(`rain ${Math.round(w.rainProb)}%`);
-  if (w.cloud != null) parts.push(`cloud ${Math.round(w.cloud)}%`);
-  if (w.swell != null) parts.push(`swell ${heightStr(w.swell)}${w.swellPeriod ? ` @ ${Math.round(w.swellPeriod)} s` : ''}`);
+  if (w.temp != null) parts.push(`${IC.temp}${fmtTemp(w.temp)}`);
+  if (w.rainProb != null && (w.rainProb >= 15 || (w.rain ?? 0) > 0.2)) parts.push(`${IC.rain}${Math.round(w.rainProb)}%`);
+  if (w.cloud != null) parts.push(`${IC.cloud}${Math.round(w.cloud)}%`);
+  if (w.swell != null) parts.push(`${IC.swell}${heightStr(w.swell)}${w.swellPeriod ? ` @ ${Math.round(w.swellPeriod)} s` : ''}`);
   return parts.join('<span class="dot">·</span>');
 }
 
@@ -139,8 +151,9 @@ function renderSpotButton() {
 
 function skeleton() {
   $('#banner').hidden = true;
-  $('#dayshape').hidden = true;
+  $('#shape-card').hidden = true;
   $('#hero').hidden = true;
+  document.querySelectorAll('#view-weather .chart-card').forEach((c) => { c.hidden = true; });
   $('#summary').innerHTML = '';
   const list = $('#blocks');
   list.innerHTML = '';
@@ -242,13 +255,24 @@ function renderDay() {
     banner.hidden = true;
   }
 
-  // day shape: six bars showing how the day's bite curve runs
+  // day shape: six bars showing how the day's bite curve runs (tap → card)
+  $('#shape-card').hidden = false;
   const shape = $('#dayshape');
-  shape.hidden = false;
-  shape.innerHTML = day.blocks.map((b) => `
-    <div class="bar${b.past && dayOffset === 0 ? ' past' : ''}${b.current && dayOffset === 0 ? ' current' : ''}" data-rating="${ratingKey(b)}">
+  shape.innerHTML = day.blocks.map((b, i) => `
+    <button type="button" class="bar${b.past && dayOffset === 0 ? ' past' : ''}${b.current && dayOffset === 0 ? ' current' : ''}"
+      data-rating="${ratingKey(b)}" data-i="${i}" aria-label="${b.name}: ${b.score} out of 100, ${b.label}">
       <i style="--hf:${Math.max(b.score, 5) / 100}"></i><span>${String(b.start).padStart(2, '0')}</span>
-    </div>`).join('');
+    </button>`).join('');
+  for (const btn of shape.querySelectorAll('.bar')) {
+    btn.addEventListener('click', () => {
+      const row = $('#blocks').children[Number(btn.dataset.i)];
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.remove('flash');
+      void row.offsetWidth; // restart the animation
+      row.classList.add('flash');
+    });
+  }
 
   // six block rows
   const list = $('#blocks');
@@ -283,6 +307,123 @@ function renderDay() {
   const notice = $('#notice');
   notice.hidden = notes.length === 0;
   notice.textContent = notes.join(' ');
+
+  renderWeather(day, dayStr, nowMs);
+}
+
+// --- weather view (charts) ---
+
+function daySlice(epochs, values, t0, t1) {
+  const out = [];
+  if (!values) return out;
+  for (let i = 0; i < epochs.length; i++) {
+    if (epochs[i] >= t0 && epochs[i] <= t1 && values[i] != null) out.push({ t: epochs[i], v: values[i] });
+  }
+  return out;
+}
+
+function mountChart(cardId, built, series, fmtVal, idleText) {
+  const card = $(cardId);
+  card.hidden = false;
+  card.querySelector('.chart-svg').innerHTML = built.html;
+  const readout = card.querySelector('.chart-readout');
+  if (readout) {
+    attachScrub(card.querySelector('svg'), built.meta, series, wx.offsetSec, readout, fmtVal, idleText);
+  }
+}
+
+function renderWeather(day, dayStr, realNow) {
+  const t0 = Date.parse(`${dayStr}T00:00:00Z`) - wx.offsetSec * 1000;
+  const t1 = t0 + DAY_MS;
+  const nowMs = dayOffset === 0 ? realNow : null;
+  const off = wx.offsetSec;
+
+  // right now (today only)
+  const nowCard = $('#wx-now');
+  if (dayOffset === 0) {
+    const at = (arr) => interp(wx.epochs, arr, realNow);
+    const wind = at(wx.wind);
+    const dir = at(wx.windDir);
+    const cells = [
+      { ic: IC.temp, v: fmtTemp(at(wx.temp)), l: 'Air' },
+      { ic: windGlyph(dir) || '', v: wind != null ? `${compass(dir ?? 0)} ${windVal(wind)} ${windUnit()}` : '—', l: 'Wind' },
+      { ic: IC.rain, v: `${Math.round(at(wx.rainProb) ?? 0)}%`, l: 'Rain' },
+      { ic: IC.cloud, v: `${Math.round(at(wx.cloud) ?? 0)}%`, l: 'Cloud' },
+    ];
+    nowCard.hidden = false;
+    nowCard.innerHTML = `<div class="chart-head"><h2 class="chart-title">Right now · ${fmtHM(realNow, off)}</h2></div>
+      <div class="now-grid">${cells.map((c) => `<div class="now-cell">${c.ic}<b>${c.v}</b><span>${c.l}</span></div>`).join('')}</div>`;
+  } else {
+    nowCard.hidden = true;
+  }
+
+  // tide
+  const tideCard = $('#wx-tide');
+  if (marine && marine.seaLevel) {
+    const series = daySlice(marine.epochs, marine.seaLevel, t0, t1);
+    const tides = tideExtrema(marine);
+    if (series.length > 3) {
+      const built = tideChart({ series, extrema: tides ? tides.extrema : [], t0, t1, nowMs, offsetSec: off });
+      const water = day.waterTemp != null ? `Water ${fmtTemp(day.waterTemp)}` : '';
+      mountChart('#wx-tide', built, series, (v) => heightStr(v), water);
+    } else {
+      tideCard.hidden = true;
+    }
+  } else {
+    tideCard.hidden = true;
+  }
+
+  // sun & moon
+  const sunCard = $('#wx-sun');
+  if (day.sun.sunrise) {
+    sunCard.hidden = false;
+    const built = sunArc({ sunrise: day.sun.sunrise, sunset: day.sun.sunset, nowMs, offsetSec: off });
+    sunCard.querySelector('.chart-svg').innerHTML = built.html;
+    const ev = moonEvents(t0, t1, activeSpot().lat, activeSpot().lng);
+    const times = [
+      ev.rises.length ? `rises ${fmtHM(ev.rises[0], off)}` : null,
+      ev.sets.length ? `sets ${fmtHM(ev.sets[0], off)}` : null,
+    ].filter(Boolean).join(' · ');
+    sunCard.querySelector('.moon-row').innerHTML =
+      `${moonIcon(day.moonPhase)}<span><b>${day.moonPhaseName}</b> · ${Math.round(day.moonFraction * 100)}% lit${times ? ' · ' + times : ''}</span>`;
+  } else {
+    sunCard.hidden = true;
+  }
+
+  // wind
+  const windSeries = daySlice(wx.epochs, wx.wind, t0, t1);
+  if (windSeries.length > 3) {
+    const gusts = daySlice(wx.epochs, wx.gust, t0, t1);
+    const built = windChart({ series: windSeries, gusts, t0, t1, nowMs, offsetSec: off, conv: (v) => windVal(v) });
+    mountChart('#wx-wind', built, windSeries, (v) => `${windVal(v)} ${windUnit()}`, `${windUnit()}`);
+  } else {
+    $('#wx-wind').hidden = true;
+  }
+
+  // temperature
+  const tempSeries = daySlice(wx.epochs, wx.temp, t0, t1);
+  if (tempSeries.length > 3) {
+    const built = tempChart({ series: tempSeries, t0, t1, nowMs, offsetSec: off, conv: (v) => (state.units === 'imperial' ? v * 1.8 + 32 : v) });
+    mountChart('#wx-temp', built, tempSeries, (v) => fmtTemp(v), '');
+  } else {
+    $('#wx-temp').hidden = true;
+  }
+
+  // rain probability
+  const rainCard = $('#wx-rain');
+  const rainSeries = daySlice(wx.epochs, wx.rainProb, t0, t1);
+  if (rainSeries.length > 3) {
+    rainCard.hidden = false;
+    if (rainSeries.every((p) => (p.v ?? 0) < 3)) {
+      rainCard.querySelector('.chart-svg').innerHTML = '<p class="chart-empty">No rain expected — dry day on the water.</p>';
+      rainCard.querySelector('.chart-readout').textContent = '';
+    } else {
+      const built = rainChart({ series: rainSeries, t0, t1, nowMs, offsetSec: off });
+      mountChart('#wx-rain', built, rainSeries, (v) => `${Math.round(v)}%`, '');
+    }
+  } else {
+    rainCard.hidden = true;
+  }
 }
 
 async function loadAndRender() {
@@ -478,9 +619,19 @@ async function shareForecast() {
 
 // --- boot ---
 
+function switchView(view) {
+  $('#view-forecast').hidden = view !== 'forecast';
+  $('#view-weather').hidden = view !== 'weather';
+  $('#tab-forecast').setAttribute('aria-pressed', String(view === 'forecast'));
+  $('#tab-weather').setAttribute('aria-pressed', String(view === 'weather'));
+  if (view === 'weather') track('weather-view');
+}
+
 wireSpotSheet();
 $('#share-btn').addEventListener('click', shareForecast);
 $('#tab-spots').addEventListener('click', () => $('#spot-btn').click());
+$('#tab-forecast').addEventListener('click', () => switchView('forecast'));
+$('#tab-weather').addEventListener('click', () => switchView('weather'));
 loadAndRender();
 // refresh scores every 10 min so "now" markers and windows stay honest
 setInterval(() => { if (wx) renderDay(); }, 10 * 60000);
