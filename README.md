@@ -47,23 +47,10 @@ stale when offline. All time math uses the spot's timezone from the API, never
 device time. Saved spots, mode per spot, and units persist locally. The app is
 an installable PWA (`manifest.webmanifest` + `sw.js` caching the static shell).
 
-## Monetization path (gated — do NOT build ahead of the gates)
+## Live
 
-The app stays completely free. Revenue steps unlock only on evidence:
+https://chris-db.github.io/FishCast/
 
-- **Gate 1 — ~50–100 returning weekly users** (per analytics): pilot **premium
-  alerts** ("notify me when my spot hits Excellent"). First feature worth
-  paying for; needs a small backend/push service — plan it as its own project.
-- **Gate 2 — audience concentrated in one region**: approach 2–3 **charter
-  operators / fishing guides** with a "book when it's Excellent" placement at
-  a flat monthly fee. High value per booking (R2k–R5k), no attribution needed.
-- **Gate 3 — real sustained traffic**: gear **affiliate links** ("what to
-  bring" line) and **flat featured listings** for tackle shops if the sales
-  effort is ever worth it.
+## License
 
-Explicit non-goals until a gate is hit: user accounts, payments, shop
-directories, display ads, pay-per-customer deals (attribution makes those
-unverifiable for walk-in retail).
-
-Analytics: GoatCounter snippet is stubbed in `index.html` — create the free
-account and swap in the site code to activate.
+MIT — see [LICENSE](LICENSE).

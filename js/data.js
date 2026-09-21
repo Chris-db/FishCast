@@ -42,10 +42,9 @@ async function cachedJson(key, url, ttl) {
   }
 }
 
-/** Convert Open-Meteo local ISO time strings to true UTC epochs. */
-function epochAxis(times, offsetSec) {
-  return times.map((t) => Date.parse(`${t}:00Z`) - offsetSec * 1000);
-}
+/** Open-Meteo unixtime is UTC seconds regardless of the timezone param —
+ * immune to DST transitions mid-range (a single utc_offset can't be). */
+const epochAxis = (times) => times.map((t) => t * 1000);
 
 export async function fetchForecast(lat, lng) {
   const params = new URLSearchParams({
@@ -66,10 +65,11 @@ export async function fetchForecast(lat, lng) {
     past_days: '1',
     forecast_days: '4',
     timezone: 'auto',
+    timeformat: 'unixtime',
     wind_speed_unit: 'kmh',
   });
   const { data, stale } = await cachedJson(
-    cacheKey('fc2', lat, lng),
+    cacheKey('fc3', lat, lng),
     `${FORECAST_URL}?${params}`,
     FORECAST_TTL
   );
@@ -79,7 +79,7 @@ export async function fetchForecast(lat, lng) {
     stale,
     timezone: data.timezone,
     offsetSec,
-    epochs: epochAxis(h.time, offsetSec),
+    epochs: epochAxis(h.time),
     pressure: h.pressure_msl,
     temp: h.temperature_2m,
     precip: h.precipitation,
@@ -112,12 +112,13 @@ export async function fetchMarine(lat, lng) {
     past_days: '1',
     forecast_days: '4',
     timezone: 'auto',
+    timeformat: 'unixtime',
     cell_selection: 'sea',
   });
   let data, stale;
   try {
     ({ data, stale } = await cachedJson(
-      cacheKey('ma2', lat, lng),
+      cacheKey('ma3', lat, lng),
       `${MARINE_URL}?${params}`,
       MARINE_TTL
     ));
@@ -131,7 +132,7 @@ export async function fetchMarine(lat, lng) {
   return {
     stale,
     offsetSec,
-    epochs: epochAxis(h.time, offsetSec),
+    epochs: epochAxis(h.time),
     waveHeight: h.wave_height,
     wavePeriod: h.wave_period,
     swellHeight: h.swell_wave_height,

@@ -139,13 +139,15 @@ export function windChart({ series, gusts, t0, t1, nowMs, offsetSec, unit, conv 
   const { x, grid, xAxis } = frame(H, t0, t1, offsetSec, ticks, (v) => `${Math.round(conv(v))}`);
   const wPts = series.map((p) => [x(p.t), y(p.v)]);
   const gPts = gusts.map((p) => [x(p.t), y(p.v)]);
-  const bandPath = `${smoothPath(gPts)} L${wPts.slice().reverse().map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L')} Z`;
-  const gLast = gPts[Math.floor(gPts.length * 0.72)];
+  const gLast = gPts.length ? gPts[Math.floor(gPts.length * 0.72)] : null;
+  const band = gPts.length
+    ? `<path d="${smoothPath(gPts)} L${wPts.slice().reverse().map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L')} Z" fill="${SERIES.band}" opacity="0.55"/>`
+    : '';
 
   const html = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wind and gusts through the day">
-    ${grid}<path d="${bandPath}" fill="${SERIES.band}" opacity="0.55"/>
+    ${grid}${band}
     <path d="${smoothPath(wPts)}" fill="none" stroke="${SERIES.wind}" stroke-width="2" stroke-linejoin="round"/>
-    <text x="${gLast[0]}" y="${gLast[1] - 5}" font-size="9" font-weight="600" fill="${INK_FAINT}">gusts</text>
+    ${gLast ? `<text x="${gLast[0]}" y="${gLast[1] - 5}" font-size="9" font-weight="600" fill="${INK_FAINT}">gusts</text>` : ''}
     ${nowLine(nowMs, t0, t1, x, H)}${xAxis}${scrubLayer()}
   </svg>`;
   return { html, meta: { H, t0, t1, v0, v1 } };

@@ -357,13 +357,18 @@ function renderWeather(day, dayStr, realNow) {
     nowCard.hidden = true;
   }
 
-  // tide
+  // tide — model heights are relative to mean sea level (negative half the
+  // cycle); shift so the window's lowest tide reads 0, like a tide table
   const tideCard = $('#wx-tide');
   if (marine && marine.seaLevel) {
-    const series = daySlice(marine.epochs, marine.seaLevel, t0, t1);
+    const known = marine.seaLevel.filter((v) => v != null);
+    const datum = known.length ? Math.min(...known) : 0;
+    const series = daySlice(marine.epochs, marine.seaLevel, t0, t1)
+      .map((p) => ({ t: p.t, v: p.v - datum }));
     const tides = tideExtrema(marine);
     if (series.length > 3) {
-      const built = tideChart({ series, extrema: tides ? tides.extrema : [], t0, t1, nowMs, offsetSec: off });
+      const extrema = (tides ? tides.extrema : []).map((x) => ({ ...x, h: x.h - datum }));
+      const built = tideChart({ series, extrema, t0, t1, nowMs, offsetSec: off });
       const water = day.waterTemp != null ? `Water ${fmtTemp(day.waterTemp)}` : '';
       mountChart('#wx-tide', built, series, (v) => heightStr(v), water);
     } else {

@@ -300,6 +300,13 @@ body {
 .chart-svg { font-family: var(--font); }
 .chart-empty { font-size: 0.8125rem; color: var(--ink-dim); padding: 0.5rem 0 0.2rem; }
 
+.chart-note {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
