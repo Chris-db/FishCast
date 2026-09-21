@@ -10,6 +10,8 @@ same for a dam in Gauteng or a beach in Portugal.
 
 Live at https://chris-db.github.io/FishCast/
 
+<img src="screenshot.png" alt="FishCast showing Umhlanga Rocks in Shore mode, with the best window of the day and the six block scores" width="420">
+
 It's a static site. No build step, no API keys, nothing to sign up for. To run
 it locally, serve the folder and open it:
 
